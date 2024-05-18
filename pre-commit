@@ -33,7 +33,7 @@ install_gitleaks() {
 install_gitleaks
 
 echo "Running gitleaks..."
-gitleaks detect --source .
+gitleaks detect --source . -v
 
 if [ $? -ne 0 ]; then
   echo "Gitleaks detected sensitive information. Please fix the issues before committing."
