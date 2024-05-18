@@ -1,0 +1,43 @@
+#!/bin/bash
+
+ENABLED=$(git config --get hooks.gitleaks.enabled)
+
+if [ "$ENABLED" != "true" ]; then
+	echo "Gitleaks hook is not enabled. Enable it using: git config hooks.gitleaks.enabled true"
+	exit 0
+fi
+
+install_gitleaks() {
+	OS=$(uname | tr '[:upper:]' '[:lower:]' )
+	GITLEAKS_URL="https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz"
+	GITLEAKS_FILE="/tmp/gitleaks.tar.gz"
+	
+	if [ "$OS" == "darwin" ]; then
+		if ! command -v gitleaks &> /dev/null; then
+			echo  "Installing gitleaks on macOS ..."
+			brew install gitleaks
+		fi
+	elif [ "$OS" == "linux" ]; then
+		if ! command -v gitleaks &> /dev/null; then
+			echo "Installing gitleaks on Linux ..."
+			wget $GITLEAKS_URL -O $GITLEAKS_FILE
+			tar -xf $GITLEAKS_FILE -C /tmp
+			sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+		fi
+	else 
+		echo "Operating system not supported"
+		exit 1
+	fi
+}
+
+install_gitleaks
+
+echo "Running gitleaks..."
+gitleaks detect --source .
+
+if [ $? -ne 0 ]; then
+  echo "Gitleaks detected sensitive information. Please fix the issues before committing."
+  exit 1
+fi
+
+exit 0
